@@ -1,0 +1,51 @@
+## Get some point data off the internet
+data = [24,18, 24,17, 22,16, 20,11, 19,6, 19,2, 17,2, 17,6,
+16,5, 15,2, 13,2, 14,5, 14,6, 12,6, 12,2, 10,2, 10,4,
+9,2, 7,2, 9,6, 7,6, 4,4, 2,3, 0,2, 1,3, 3,5, 5,9,
+9,11, 17,11, 21,17, 23,18, 24,18];
+
+P = reshape(data,2,div(length(data),2))
+x = P[1,:]
+y = P[2,:]
+
+## Plot it
+using Plots
+pyplot(legend = false)
+scatter(x,y)
+
+##
+# Connect the dots
+plot!(x,y,linestyle = :solid)
+
+## Rotate our little friend
+deg = 63
+theta = deg/180*pi
+R = [cos(theta) -sin(theta); sin(theta) cos(theta)]
+Pp = R*P
+plot!(Pp[1,:],Pp[2,:],linestyle = :solid,marker = ".")
+
+## Another matrix operation
+S = [1 0; 0.1 1]
+Pp = S*P
+plot(x,y,linestyle = :solid,marker = ".")
+plot!(Pp[1,:],Pp[2,:],linestyle = :solid,marker = ".")
+
+## A random matrix
+R = randn(2,2)
+Pp = R*P
+plot(x,y,linestyle = :solid,marker = ".")
+plot!(Pp[1,:],Pp[2,:],linestyle = :solid,marker = ".")
+
+## Combine operations
+deg = 93
+theta = deg/180*pi
+R = [cos(theta) -sin(theta); sin(theta) cos(theta)]
+S = [1 -2; -3 1]
+Pp = S*R*P
+plot(x,y,linestyle = :solid,marker = ".")
+plot!(Pp[1,:],Pp[2,:],linestyle = :solid,marker = ".")
+
+
+# Now the same in 3d!
+#V = readdlm("../../matlab_codes/lecture3/yodapose_V",',',Float64)
+#F4 = readdlm("../../matlab_codes/lecture3/yodapose_F4",',',Int64)
