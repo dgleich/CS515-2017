@@ -22,7 +22,7 @@ deg = 63
 theta = deg/180*pi
 R = [cos(theta) -sin(theta); sin(theta) cos(theta)]
 Pp = R*P
-plot!(Pp[1,:],Pp[2,:],linestyle = :solid,marker = ".")
+plot!(Pp[1,:],Pp[2,:],linestyle = :solid,marker = :circle)
 
 ## Another matrix operation
 S = [1 0; 0.1 1]
@@ -43,7 +43,7 @@ R = [cos(theta) -sin(theta); sin(theta) cos(theta)]
 S = [1 -2; -3 1]
 Pp = S*R*P
 plot(x,y,linestyle = :solid,marker = ".")
-plot!(Pp[1,:],Pp[2,:],linestyle = :solid,marker = ".")
+plot!(Pp[1,:],Pp[2,:],linestyle = :solid,marker = :circle)
 
 
 # Now the same in 3d!

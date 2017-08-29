@@ -1,0 +1,155 @@
+
+## Arithmetic
+1+1
+
+## What's different?
+1.0 + 1.0
+
+## The typeof to see what it is
+typeof(1+1)
+
+## A different type
+typeof(1.0+1.0)
+
+## We can enter matrices
+A  = [1 2; 3 4]
+
+## And these are auto-typed
+B = [1.0 2; 3 4]
+
+## Automatic promotion
+C = A*B
+
+
+## More automatic promotion
+1+1.0
+
+## What about complex numbers?
+sqrt(-1.0)
+
+## If you want them, you have to ask
+sqrt(-1.0+0i)
+
+## "im" means imaginary
+sqrt(-1.0+0im)
+
+## Lots of handy stuff for linear algebra
+eig([1 1; 1 2])
+
+## Singular value decomposition
+svd([1 1; 1 2])
+
+## If you want to index, you need to use []
+C[1,2]
+
+## You can't use floating point
+C[1.0,2]
+
+## Which is sometimes a problem
+C[2/1,2]
+
+## So there are a few ways to fix
+@show C[round(Int, 2/1), 2] # round to an integer
+@show C[ceil(Int, 2/1), 2] # ceil to an integer
+@show C[floor(Int, 2/1)], 2) #
+@show C[2 ÷ 1, 2] # fancy division sign, enter in Atom with \div<TAB>
+@show C[div(2,1), 2] # same thing without the fancy-ness "div" means integer division
+
+## Vectors can be compliated
+x = [1 2 3 4]
+## Eek, that was a row-vector
+x = [1;2;3;4]
+## What is this one?
+x = [1,2,3,4]
+## I always get confused if I hae to use "," or ";" so don't worry
+
+## Vectors can have a single index
+x[2]
+## Or two indices because they are _column_ vectors!
+x[2,1]
+
+## We can do matrix-vector products
+ones(4,4)*x
+
+## But we can't multiply them against each other!
+x*x
+
+## Inner-products
+x'*x
+
+## Outer-products
+x*x'
+
+## How do you see the entire output?
+@show x'*rand(4,4)
+
+## If you want full precision
+foreach(println, x'*rand(4,4))
+
+##
+foreach(println, eye(4))
+
+## Okay, it seems I was wrong earlier! You can do this in Julia
+x+5
+
+## Loop variables are removed
+for i=1:10
+  @show i
+end
+@show i # this gives an error because i was only valid inside the loop
+
+## You can create functions whenever
+function add5(x)
+  return x+5
+end
+
+function add6(x)
+  x+6
+end
+
+add7(x) = x+7 # shorthand that avoids functions
+
+add8 = x -> x + 8
+
+
+
+## Plotting requires some setup, just once
+using Plots
+pyplot()
+##
+plot(1:100)
+
+## A bigger plot
+
+# setup plot data
+k = 1:60
+
+# Linear
+seq = 0.85.^k
+plot(k, seq, lab="Linear", yaxis=:log10, color="black", linewidth=2)
+
+# Arithmetic
+plot!(k, 1./k, lab="Arithmetic", yaxis=:log10, color="green", linewidth=2)
+
+seq = 1./(k.^2)
+plot!(k, seq, lab="Arithmetic2", yaxis=:log10, color="green", linewidth=2)
+
+# Superlinear
+seq = (2*k).^(-0.05*k)
+plot!(k, seq, lab="Superlinear", yaxis=:log10, color="red", linewidth=2)
+
+# Quadratic
+# overflow for k = 60
+t = 1:18
+seq = (0.99).^(2.^t)
+plot!(t, seq, lab="Quadratic", yaxis=(:log10, (1e-8, 1)), color="magenta", linewidth=2)
+
+# Cubic
+t = 1:12
+seq = (0.99).^(3.^t)
+plot!(t, seq, lab="Cubic", yaxis=(:log10, (1e-8, 1)), color="yellow", linewidth=2)
+
+##
+plot(1:100)
+title!("Test")
+gui() # This shows a window if you are in Atom.
