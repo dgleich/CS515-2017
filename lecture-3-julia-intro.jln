@@ -1,4 +1,3 @@
-
 ## Arithmetic
 1+1
 
@@ -30,11 +29,19 @@ sqrt(-1.0)
 ## If you want them, you have to ask
 sqrt(-1.0+0i)
 
+## Can't use j either ...
+sqrt(-1.0+0j)
+
 ## "im" means imaginary
 sqrt(-1.0+0im)
 
 ## Lots of handy stuff for linear algebra
 eig([1 1; 1 2])
+
+##
+lam, V = eig([1 1; 1 2])
+@show lam
+@show V
 
 ## Singular value decomposition
 svd([1 1; 1 2])
@@ -63,16 +70,29 @@ x = [1;2;3;4]
 x = [1,2,3,4]
 ## I always get confused if I hae to use "," or ";" so don't worry
 
+##
+x = [1 2 3 4; zeros(1,4)]
+##
+x = [1,2,3,4; zeros(1,4)]
+# this is an error :(
+
+## Make the vector again
+x = [1,2,3,4]
 ## Vectors can have a single index
 x[2]
 ## Or two indices because they are _column_ vectors!
 x[2,1]
+##
+x[1,2]
 
 ## We can do matrix-vector products
 ones(4,4)*x
 
 ## But we can't multiply them against each other!
 x*x
+
+## Element-wise
+x.*x
 
 ## Inner-products
 x'*x
@@ -92,6 +112,9 @@ foreach(println, eye(4))
 ## Okay, it seems I was wrong earlier! You can do this in Julia
 x+5
 
+##
+x.+5
+
 ## Loop variables are removed
 for i=1:10
   @show i
@@ -110,8 +133,6 @@ end
 add7(x) = x+7 # shorthand that avoids functions
 
 add8 = x -> x + 8
-
-
 
 ## Plotting requires some setup, just once
 using Plots
@@ -149,6 +170,8 @@ t = 1:12
 seq = (0.99).^(3.^t)
 plot!(t, seq, lab="Cubic", yaxis=(:log10, (1e-8, 1)), color="yellow", linewidth=2)
 
+##
+gui()
 ##
 plot(1:100)
 title!("Test")
