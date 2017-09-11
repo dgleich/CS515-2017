@@ -1,0 +1,84 @@
+## Lecture 6 - Simple linear system solving!
+
+"""
+`diag_solve(A,b) -> x`
+
+Solve a linear system of equations with a diagonal matrix A.
+
+`x = diag_solve(A,b)` returns a vector x such that Ax=b when
+A is a diagonal n-by-n matrix. If A is not diagonal, then this
+routine may silently fail to return such an x; use with
+extreme care!
+
+Example
+-------
+    n = 6
+    A = diagm(randn(n))
+    b = randn(n)
+    x = diag_solve(A,b)
+    norm(x - A\b) # should be close to zero!
+"""
+function diag_solve(A,b)
+    n = size(A,1)
+    @assert n == length(b) "b has the wrong length"
+    @assert n == size(A,2) "A is not square"
+
+    x = zeros(n) # allocate the solution
+    for i=1:n
+        @assert A[i,i] > eps(1.0) "A is singular"
+        if abs(A[i,i]) <= eps(1.0)
+            error("A is singular")
+        end
+        x[i] = b[i]/A[i,i]
+    end
+    return x
+end
+
+##
+n = 6
+A = diagm(randn(n))
+b = randn(n)
+x = diag_solve(A,b)
+norm(x - A\b) # should be close to zero!
+
+## is this fast? Timing version 1
+n = 50
+A = diagm(randn(n))
+b = randn(n)
+@time diag_solve(A,b)
+@time A\b
+
+## Timing version 2
+
+""" Run a time trial on solving n-by-n systems, t times. """
+function many_times(n,t)
+    time_us = 0.0
+    time_julia = 0.0
+
+    for i=1:t
+        A = diagm(randn(n))
+        b = randn(n)
+        time_us += @elapsed diag_solve(A,b)
+        time_julia += @elapsed A\b
+    end
+    return time_us, time_julia
+end
+
+##
+@show many_times(1000,1000)
+
+## Does backslash work with sparse matrices.
+function many_times_sparse(n,t)
+    time_us = 0.0
+    time_julia = 0.0
+
+    for i=1:t
+        A = diagm(randn(n))
+        b = randn(n)
+        As = sparse(A) # convert into a sparse matrix
+        time_us += @elapsed diag_solve(As,b)
+        time_julia += @elapsed As\b
+    end
+    return time_us, time_julia
+end
+@show many_times_sparse(100,1000)

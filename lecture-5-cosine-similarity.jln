@@ -1,0 +1,90 @@
+## Cosine similarity and vector norms
+# Given two vectors, one measure of their similarity is the cosine of the
+# angle between the vector.
+# Suppose that $a$ and $b$ are both vectors.
+
+
+## Setup packages
+# Note, if you get an error here, make sure you add these packages!
+# Pkg.add("MAT")
+# Pkg.add("Images")
+using MAT
+using Images
+using Plots
+pyplot(dpi=150, size=(400,400))
+myshow() = begin; if isdefined(:Atom); gui(); else; return plot!(); end; end
+## Download the Yale dataset
+# Deng Cai at Zhejiang university made some of the common image databases
+# available in Matlab format at his webpage:
+#   http://www.cad.zju.edu.cn/home/dengcai/Data/FaceData.html
+# Thanks!  We are going to download and load one
+# the matload function loads a Matlab MAT file, it r
+
+data = matread(download(
+          "http://www.cad.zju.edu.cn/home/dengcai/Data/Yale/Yale_64x64.mat"))
+
+## The data has
+fea = data["fea"]
+
+## Showing an image
+# The matrix fea is an image where each row is an image.
+# we can display it with "heatmap"
+I = reshape(fea[1,:],64,64)
+heatmap(I,yflip=true, color=:gray, title="original image")
+myshow()
+## Another way to view
+colorview(Gray, I/255.0) # need to scale to [0,1]
+
+## Let's find the closest face to this image using cosine similarity.
+# This will involve transforming the data, slightly...
+
+##
+# First, take the transpose of the data.
+F = fea'
+
+##
+# Second, normalize the columns
+A = zeros(Float64,size(F))
+for i = 1:size(F,2)
+    A[:,i] = F[:,i]/norm(F[:,i]) # set the ith column of A to be the
+                                 # ith column of F, normalized.
+end
+
+##
+# Third, compute cosine similarities against the first image
+z = fea[1,:]  # get the first image
+z = z/norm(z) # normalize it
+s = A'*z      # compute all the cosines!
+
+##
+# The cosine of an angle in the same orthant is between 0 and 1, let's check this!
+plot(s)
+myshow()
+##
+# Let's find the closest image
+p = sortperm(s,rev = true) # sort s in descending order and
+                       # store the sorting permutation in p
+# p[1] is the closest image to the first one.
+@show p[1]
+
+##
+# Hey, it's closest to itself!  What's the next closest?
+@show p[2]
+
+##
+# Let's see it!
+
+I2 = reshape(fea[p[3],:],64,64)
+pyplot(dpi=150, size=(600,300)) # setup for wide window
+plot(
+ heatmap(I,yflip=true, color=:gray, title="original image"),
+ heatmap(I2,yflip=true,color=:gray, title="closest image"))
+myshow()
+
+## Another way to plot
+f = heatmap(I,yflip=true, color=:gray)
+g = heatmap(I2,yflip=true,color=:gray)
+title!(f, "original image")
+title!(g, "closest image")
+plot(f, g)
+myshow()

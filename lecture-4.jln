@@ -1,0 +1,73 @@
+## Show the action of a matrix in the vector 1-norm
+# pick a random matrix
+A = randn(2,2)
+# pick 100 random points
+X = randn(2,100)
+# normalize the points to be unit 1-norm
+for i = 1:100
+    X[:,i] = X[:,i]/norm(X[:,i],1)
+end
+Y = A*X #transform all the points by the matrix
+
+## Plot it
+using Plots
+pyplot(legend = false, size=(750,750), dpi=150)
+myshow() = begin; if isdefined(:Atom); gui(); else; return plot!(); end; end
+scatter(X[1,:],X[2,:])
+scatter!(Y[1,:],Y[2,:])
+myshow()
+
+## Compare with the matrix norm
+@show norm(A,1)
+@show maximum(sum(abs.(Y),1))
+
+## Same thing with the infinity norm
+# Pick a random matrix and points
+A = randn(2,2)
+X = randn(2,100)
+
+# normalize the points to be unit inf-norm
+for i = 1:100
+    X[:,i] = X[:,i]/norm(X[:,i],Inf)
+end
+
+Y = A*X # transform all the points by the matrix
+
+# Compare with the matrix norm
+println("Infinity norm")
+@show norm(A,Inf)
+@show max(maximum(abs.(Y)))
+
+# Show the result
+scatter(X[1,:],X[2,:])
+scatter!(Y[1,:],Y[2,:])
+myshow()
+
+
+# to re-display, uncomment the following:
+# display(f)
+# display(g)
+# to save the figures:
+# savefig(f,"one-norm.pdf")
+# savefig(g,"inf-norm.pdf")
+
+## Same thing with the 2-norm
+# Pick a random matrix and points
+A = randn(2,2)
+X = randn(2,100)
+
+# normalize the points to be unit 2-norm
+for i = 1:100
+    X[:,i] = X[:,i]/norm(X[:,i],2);
+end
+Y = A*X # transform all the points by the matrix
+
+
+# Compare with the matrix norm
+@show norm(A,2)
+@show sqrt(maximum(sum(Y.^2,1)))
+
+# Show the result
+scatter(X[1,:],X[2,:])
+scatter!(Y[1,:],Y[2,:])
+myshow()
