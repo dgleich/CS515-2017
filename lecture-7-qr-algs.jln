@@ -1,0 +1,71 @@
+## Householder QR
+
+## Julia's QR code
+A = randn(5,5)
+Q,R = qr(A)
+## A simple
+"""
+`householder_qr_simple`
+A pedagogical code for QR via householder reflections
+"""
+function householder_qr_simple(Ain)
+  A = copy(Ain)
+  m,n = size(A)
+
+  # transform A into R by working in-place
+  Q = eye(m)
+  for i=1:n-1 # we always have Ain = Q*A
+    ai = A[i:end,i] # extract ith column
+    w = -ai
+    w[1] = w[1] + norm(ai)
+    w = w/norm(w)
+    H = eye(m-i+1)-2*w*w' # form reflector
+    Q[:,i:end] = Q[:,i:end]*H'
+    A[i:end,i:end] = H*A[i:end,i:end]
+    @printf("%4i : norm(Q*A - Ain) = %.16e\n",
+      i, norm(Q*A - Ain))
+  end
+  R = triu(A)
+  return Q, R
+end
+
+Q1,R1 = householder_qr_simple(A)
+@show norm(Q1'*Q1 - I)
+@show norm(A - Q1*R1)
+
+
+
+
+
+##
+# Let's do a runtime analysis of this code.
+
+## Here's a better version, but this version encodes A itself.
+function householder_qr(Ain)
+  A = copy(Ain)
+  n = size(A,2)
+  for i = 1:n
+    # compute householder vector
+    ai = A[i:end,i]
+    ai1 = ai[1]
+    v = copy(ai)
+    v[1] = v[1] + sign(ai[1])*norm(ai)
+    v = v/norm(v)
+    A[i:end,i] = v
+    w = A[i:end,(i+1):end]'*v
+
+    # update the lower part of the matrix
+    A[i:end,(i+1):end] = A[i:end,(i+1):end] - 2*v*w'
+    A[i,i] = - norm(ai)*sign(ai1)
+  end
+  R = triu(A)
+  return A,R
+end
+
+# In julia
+A = randn(5,5)
+Qdata,R = householder_qr(A)
+qrfact!(A) # this is exactly what Julia can compute in it's super-optimal QR form.
+
+display(Qdata)
+display(A)

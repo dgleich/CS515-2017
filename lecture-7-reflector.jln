@@ -1,0 +1,89 @@
+## Lecture 7 Householder reflectors
+
+using Plots
+using LaTeXStrings
+gr(legend = false, grid = false, ticks = false, border = false, aspect_ratio=:equal)
+myshow() = begin; if isdefined(:Atom); gui(); else; return plot!(); end; end
+
+## Create a little helper function
+function plot_vector(f,x,off,c;plus=true)
+  plus == false ? (op = -) :  (op = +)
+  xvals = [off[1],op(off[1],x[1])]
+  yvals = [off[2],op(off[2],x[2])]
+  plot!(f,xvals,yvals,linewidth=2,color=c, arrow=true)
+end
+
+
+## Show the vector from the board
+x = [3.0,4.0]
+xe1 = norm(x)*[1;0.0]
+
+xvals = [0,x[1]]
+yvals = [0,x[2]]
+f = plot(xvals,yvals,color=:blue,linestyle = :solid,linewidth=2)
+annotate!(f,[(x[1]-1,x[2]-0.5,text(L"x",12,:black,:left))])
+
+xvals = [0,xe1[1]]
+yvals = [0,xe1[2]]
+plot!(f,xvals,yvals,color=:blue,linewidth=2)
+
+xvals = [x[1],xe1[1]]
+yvals = [x[2],xe1[2]]
+scatter!(f,xvals,yvals,color=:blue)
+annotate!(f,[(xe1[1]-1,xe1[2]-0.5,text(L"||x|| e_1",12,:black,:left))])
+
+plot!(f,[0,0],[-5,5],color=:gray)
+plot!(f,[-5,5],[0,0],color=:gray)
+myshow()
+
+##
+# Compute v
+v = xe1 - x
+
+# Plot v in both locations
+plot_vector(f,v,x,:red)
+plot_vector(f,v,zeros(Int64,size(v)),:blue)
+plot_vector(f,v,zeros(Int64,size(v)),:blue;plus=false)
+myshow()
+
+## Project to the orthogonal space to v
+P = eye(2) - v*v'/(v'*v)
+Px = P*x
+plot_vector(f,Px,zeros(Int64,size(Px)),:blue)
+annotate!(f,[(Px[1]-1,Px[2]+0.1,text(L"P x",8,:black,:left))])
+myshow()
+
+## Construct the householder reflector
+# This takes twice the projection onto v away from x.
+H = eye(2) - 2*v*v'/(v'*v)
+Hx = H*x
+
+h = plot_vector(f,Hx,zeros(Int64,size(Hx)),:red)
+annotate!(f,[(Hx[1]-1,Hx[2]+0.1,text(L"H x",8,:black,:left))])
+myshow()
+
+## Check that H is orthogonal
+@show H'*H
+
+## A better orthogonality check
+@show norm(H'*H - eye(2))
+
+## Check that x is the first column of H, but normalized
+display([H[:,1] x/norm(x)])
+
+
+## Let's see a bigger example
+x = randn(5,1)
+xe1 = zeros(5,1)
+xe1[1] = norm(x)
+v = xe1-x
+
+H = eye(5) - 2*v*v'/(v'*v)
+
+## Check  orthogonality
+@show norm(H'*H-eye(5))
+
+## Check the first column
+@show [H[:,1] x/norm(x)]
+
+display(f)
