@@ -1,0 +1,12 @@
+## Intro to stability
+
+function hilb(n::Integer)
+  A = zeros(n,n)
+  for j=1:n
+    for i=1:n
+      A[i,j] = 1.0/(i+j-1)
+    end
+  end
+  return A
+end
+display(hilb(5))

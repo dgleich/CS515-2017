@@ -1,0 +1,109 @@
+## LU Decompositions
+function lusimple(Aref) # julia always passes by reference, so make sure to make a copy
+  A = copy(Aref)
+  n = size(A,1)
+  L = eye(n,n)
+
+  for i = 1:n-1
+    alpha = A[i,i]
+    b = A[i,(i+1):end]
+    c = A[(i+1):end,i]
+    L[(i+1):end,i] = c/alpha
+    A[(i+1):end,(i+1):end] = A[(i+1):end,(i+1):end] - c*b'/alpha
+  end
+  U = triu(A)
+  return L,U
+end
+
+
+A = [2.0 1 -1; -3 -1 2; -2 1 2]
+L,U = lusimple(A)
+display(L)
+display(U)
+
+## Next we want to see what happens for a few cases
+
+function lusimple_show_work(Aorig)
+
+  A = copy(Aorig)
+  A = convert(Array{Float64,2},A)
+  n = size(A,1)
+  L = eye(n,n)
+
+
+  for i = 1:n-1
+    @printf("After %i steps ... \n", i-1)
+    @printf("L = \n")
+    display(L)
+    @printf("L^{-1} A = \n");
+    display(L\Aorig)
+
+    sleep(2)
+
+    alpha = A[i,i]
+    b = A[i,(i+1):end]
+    c = A[(i+1):end,i]
+    L[(i+1):end,i] = c/alpha
+    A[(i+1):end,(i+1):end] = A[(i+1):end,(i+1):end] - c*b'/alpha
+
+  end
+  U = triu(A)
+  return L,U
+end
+
+
+A = [1.0 2 4; -2 -4 6; 3 2 1]
+display(rank(A))
+
+L,U = lusimple_show_work(A)
+@printf("Done!")
+display(L)
+display(U)
+
+##
+A = [2.0 1 -1; -3 -1 2; -2 1 2];
+L,U = lusimple(A)
+display(L)
+display(U)
+##
+A = [1e-20 1; 1 1]
+L,U = lusimple(A)
+
+##
+A = [1 1; 1e-20 1]
+L,U = lusimple(A)
+
+
+## A more advanced LU code that doesn't allocate any additional storage
+# but still no pivoting. This still needs a bit of work :(
+# don't worry if you don't understand this, I'm just providing it as a
+# "get started" code in case you want to see what you'd do to make the
+# Julia LU code start to go faster.
+using SugarBLAS
+function lubetter!(A) # this will modify A in place, and store L in the lower-triangle
+  n = size(A,1)
+  for i = 1:n-1
+    alpha = A[i,i]
+    b = @view A[i,(i+1):end] # this doesn't make a copy
+    c = @view A[(i+1):end,i]
+    B = @view A[(i+1):end,(i+1):end]
+    @blas! c = c/alpha
+    SugarBLAS.@ger! B -= 1.0*c*b' # c changed in place!
+  end
+  return A
+end
+function lubetter(A)
+  B = lubetter!(copy(A))
+  L = tril(B,1) + eye(B) # could improve this step!
+  U = triu!(B,0)
+  return L, U
+end
+
+# Precompile
+lubetter(randn(10,10));
+lusimple(randn(10,10));
+
+# Time
+@time lubetter(randn(1024,1024));
+@time lubetter!(randn(1024,1024)); # if you didn't need L, U explicitly!
+@time lusimple(randn(1024,1024));
