@@ -1,0 +1,124 @@
+## Intro to Sparse Matrices
+
+## Coordinate format.
+I = [1,2,1,2,5,1,4,6,3]
+J = [1,1,2,2,1,4,2,2,3]
+V = [2,-1,1,1,-1,-1,1,2,2]
+##
+A = zeros(Int64,6,4)
+for k = 1:length(I)
+    A[I[k],J[k]] = V[k]
+end
+##
+A = sparse(I,J,V,6,4)
+
+##
+"""
+spmatvec_coord Compute a sparse matrix vector product with A in coord form
+    y = spmatvec(Acoord, x) compute y=A*x where A is represented as a matrix in
+    coordinate form:
+        Acoord is a nnz-by-3 array where
+        Acoord[k,1] is the row index of the kth non-zero
+        Acoord[k,2] is the column index of the kth non-zero
+        Acoord[k,3] is the value of the kth non-zero
+    ```
+    Example:
+    n = 10
+    A = sprand(n,n,0.2)
+    i,j,v = findnz(A)
+    x = randn(n)
+    z = A*x
+    C = SparseTripletFormat(i,j,v)
+    y = spmatvec_coord(C,x)
+    @show norm(z-y)
+```
+
+
+"""
+type SparseTripletFormat{T}
+  i::Array{Int64}
+  j::Array{Int64}
+  v::Array{T}
+end
+function spmatvec_coord(C, x)
+  m = maximum(C.i)
+  y = zeros(m)
+  for k = 1:length(C.i)
+    y[C.i[k]] = y[C.i[k]] + C.v[k]*x[C.j[k]]
+  end
+  return y
+end
+
+##
+"""
+    spmatvec_csc Compute a sparse matrix vector product with A in CSC form
+    y = spmatvec_csc(A,x) multiply a sparse matrix stored in compressed
+
+    ```
+    Example:
+    n = 10
+    A = sprand(n,n,0.2)
+    x = randn(n)
+    z = A*x
+    y = spmatvec_csc(A,x)
+    @show norm(z-y)
+    ```
+"""
+function spmatvec_csc{T}(A::SparseMatrixCSC{T,Int64},x)
+assert(A.n == length(x))
+y = zeros(A.m)
+for j = 1:A.n
+    for k = A.colptr[j]:(A.colptr[j+1]-1)
+        y[A.rowval[k]] = y[A.rowval[k]] + A.nzval[k]*x[j]
+    end
+end
+return y
+end
+
+
+##
+x = randn(4,1)
+C = SparseTripletFormat(I,J,V)
+y = spmatvec_coord(C,x)
+##
+yjulia = A*x
+##
+y - yjulia
+
+## Convert to a sparse matrix
+A = sparse(I,J,V,6,4)
+
+## Convert to a dense matrix.
+full(A)
+
+## Convert sparse A back to coordinate
+i,j,v = findnz(A)
+
+## Compressed sparse column
+I = [1,2,5,1,2,4,6,3,1]
+V = [2,-1,-1,1,1,1,2,2,-1]
+Jp = [1,4,8,9,10]
+
+##
+A = SparseMatrixCSC(6,4,Jp,I,V)
+
+##
+y = spmatvec_csc(A,x)
+yjulia = A*x
+y - yjulia
+
+## julia stores CSC
+@show typeof(A)
+whos()
+##
+# So this takes 184 + 40 bytes
+# it stores: rowval = 64-bit integers, nnz of them
+#            nzval = 64-bit doubles, nnz of them
+#            colptr = 64-bit integers, n + 1 of them
+# 9 non-zeros, n = 4
+# 9*8*2 (bytes for I, V) + 5*8 (bytes for Jp)
+# sizeof(A) = 40
+9*8*2 + 5*8 + 40
+
+## Random sparse matrices
+A = sprand(1_000_000,100_000,10/1_000_000)
