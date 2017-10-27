@@ -1,0 +1,67 @@
+##
+myshow() = begin; if isdefined(:Atom); gui(); else; return plot!(); end; end
+A = [0 1; 1 0]
+eig(A)
+
+##
+D,V = eig(A)
+
+## Let's try the power method
+# using SpecialMatrices
+A = [
+0     1     2     3     4
+1     0     1     2     3
+2     1     0     1     2
+3     2     1     0     1
+4     3     2     1     0
+]
+
+##
+n = 5
+x0 = randn(n)
+x = x0
+for i = 1:10
+    y = A*x
+    lam = (x'*y)/(x'*x)
+    x = y./norm(y)
+end
+
+## Let's make a plot
+x0 = randn(n)
+x = x0
+t = 100
+lam = zeros(t)
+for i = 1:t
+    y = A*x
+    x = y/norm(y)
+    lam[i] = x'*y
+end
+
+using Plots
+pyplot()
+xvals = 1:t-1
+yvals = abs.(diff(lam))
+xvals = xvals[find(yvals)]
+yvals = yvals[find(yvals)]
+f = scatter(xvals,log.(yvals))
+ylabel!(f,"lambda(i+1) - lambda(i)")
+xlabel!(f,"iteration i")
+title!(f,@sprintf("convergence of eigenvalue %.18e",lam[end]));
+myshow()
+
+
+## Let's check Julia
+[eigmax(A),lam[end]]
+
+## And the vector?
+D,V = eig(A)
+
+
+## Now, let's try that QR method!
+X = randn(n,n)
+Q,R = qr(X)
+for i = 1:100
+    Q,R = qr(A*Q)
+end
+Lam = Q'*A*Q
+@show diag(Lam)
