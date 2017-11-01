@@ -1,0 +1,94 @@
+"""
+linsys_sor Solve a linear system with the SOR method
+    x = linsys_sor(A,b) uses the Gauss-Seidel method,
+    i.e. SOR with omega = 1 and computes a solution
+    where the element-wise difference in iterates
+    is less than 1e-8
+
+    x,hist = linsys_sor(A,b,omega,tol,maxit) also takes
+    additional arguments that give:
+    the value of omega: 0 < omega < 2,
+    the stopping tolerance: tol >= 0
+    the maximum number of iterations: maxit > 0
+    each argument assumes it's default value of
+        omega = 1
+        tol = 1e-8
+        maxit = 10*sqrt(n)
+
+     hist returns the largest element-wise change in each
+     iteration, and this is an upper-bound on the residual.
+```
+Example:
+    L = [
+        4    -1     0    -1     0     0     0     0     0
+       -1     4    -1     0    -1     0     0     0     0
+        0    -1     4     0     0    -1     0     0     0
+       -1     0     0     4    -1     0    -1     0     0
+        0    -1     0    -1     4    -1     0    -1     0
+        0     0    -1     0    -1     4     0     0    -1
+        0     0     0    -1     0     0     4    -1     0
+        0     0     0     0    -1     0    -1     4    -1
+        0     0     0     0     0    -1     0    -1     4
+    ]
+    b = ones(size(L,1))
+    x = linsys_sor(L,b)
+```
+"""
+
+function linsys_sor(A,b,omega,tol,maxit)
+  n = length(b)
+
+  x = b[:]
+  At = A' #transpose the matrix to get faster access to each row.
+  normb = norm(b,Inf)
+  hist = zeros(maxit)
+
+  assert(size(At,1) == n)
+  assert(size(At,2) == n)
+
+
+  iter = 1
+  dt = 0
+  maxdiff = 0
+  for iter = 1:maxit
+    tic()
+    maxdiff = 0
+    for i = 1:n
+      # see Golub and van Loan, equation 10.1.7 in the 3rd edition
+      # see Golub and van Loan, equation 11.2.20 in the 4th edition
+
+      ai = find(At[:,i]) # get the info in the ith row
+      av = At[ai,i]
+      xi = b[i]
+      aii = 0
+      for ind = 1:length(ai)
+        if ai[ind] == i
+          aii = av[ind]
+        else
+          xi = xi - av[ind]*x[ai[ind]]
+        end
+      end
+      maxdiff = max(maxdiff, abs(omega*xi/aii + (1-omega)*x[i] - x[i]))
+      x[i] = omega*xi/aii + (1-omega)*x[i]
+    end
+    hist[iter] = maxdiff
+    if mod(iter,10^floor(log10(iter)))==0 || iter==maxit || maxdiff/normb <= tol
+      dt += toq()
+      @printf(" iter=%8i  diff=%8.1e  res=%8.1e  time=%7.1f\n",
+      iter, maxdiff, norm(b-A*x)/norm(b), dt)
+    end
+    if maxdiff/normb <= tol
+      break
+    end
+  end
+  if iter==maxit && maxdiff/normb > tol
+    warn(@sprintf(" the sor method with omega=%f
+    did not converge to a tolerance of %.1e
+    in %i steps",omega,tol,maxit))
+  end
+  hist = hist[1:maxit]
+  return x,hist
+end
+
+linsys_sor(A,b) = linsys_sor(A,b,1,1e-8,ceil(Int64,10*sqrt(length(b))))
+linsys_sor(A,b,omega) = linsys_sor(A,b,omega,1e-8,ceil(Int64,10*sqrt(length(b))))

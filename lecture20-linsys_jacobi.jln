@@ -1,0 +1,71 @@
+"""
+    linsys_jacobi Solve a linear system with the Jacobi method
+    x = linsys_jacobi(A,b) uses the Jacobi method,
+    where the element-wise residual is 1e-8
+
+    x,hist = linsys_jacobi(A,b,tol,maxit) also takes
+    additional arguments that give:
+    the stopping tolerance: tol >= 0
+    the maximum number of iterations: maxit > 0
+    each argument assumes it's default value of
+        tol = 1e-8
+        maxit = 100*sqrt(n)
+
+    hist returns the largest element-wise change in each
+    iteration, and this is an upper-bound on the residual.
+```
+Example:
+    L = [
+        4    -1     0    -1     0     0     0     0     0
+       -1     4    -1     0    -1     0     0     0     0
+        0    -1     4     0     0    -1     0     0     0
+       -1     0     0     4    -1     0    -1     0     0
+        0    -1     0    -1     4    -1     0    -1     0
+        0     0    -1     0    -1     4     0     0    -1
+        0     0     0    -1     0     0     4    -1     0
+        0     0     0     0    -1     0    -1     4    -1
+        0     0     0     0     0    -1     0    -1     4
+    ]
+    b = ones(size(L,1))
+    x = linsys_jacobi(L,b)
+```
+"""
+function linsys_jacobi(A,b,tol,maxit)
+  n = length(b)
+
+  x = b[:]
+  d = diag(A)
+  id = 1./d
+  N = -(A - diagm(d))
+  normb = norm(b,Inf)
+  hist = zeros(maxit)
+
+  assert(size(A,1) == n)
+  assert(size(A,2) == n)
+  iter = 1
+  dt = 0
+  maxdiff = 0
+  for iter = 1:maxit
+    tic()
+    xn = id.*(b + N*x)
+    maxdiff = norm(xn-x,Inf)
+    x = xn
+    hist[iter] = maxdiff
+    if mod(iter,10^floor(log10(iter)))==0 || iter==maxit || maxdiff/normb <= tol
+      dt += toq()
+      @printf(" iter=%8i  diff=%8.1e  res=%8.1e  time=%7.1f\n",
+      iter, maxdiff, norm(b-A*x)/norm(b), dt)
+    end
+    if maxdiff/normb <= tol
+      break
+    end
+  end
+  if iter==maxit && maxdiff/normb > tol
+    warn(@sprintf(" the sor method
+    did not converge to a tolerance of %.1e
+    in %i steps",tol,maxit))
+  end
+  return x,hist
+end
+
+linsys_jacobi(A,b) = linsys_jacobi(A,b,1e-8,ceil(Int64,100*sqrt(length(b))))

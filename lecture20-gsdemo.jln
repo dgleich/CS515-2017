@@ -1,0 +1,57 @@
+include("linsys_sor.jl")
+include("linsys_sor.jl")
+using Plots
+using LaTeXStrings
+pyplot(legend=false)
+
+function numgridS(n)
+  A = zeros(Int,n,n)
+  tofill = (n-2)^2
+  h = 1
+  for r = 2:n-1
+    for c = 2:n-1
+      A[r,c] = h+(c-2)*(n-2)
+    end
+    h += 1
+  end
+  return A
+end
+
+#fdlaplacian from (http://nbviewer.jupyter.org/url/homepages.warwick.ac.uk/staff/C.Ortner/julia/Laplacian.ipynb)
+# with modification
+function fdlaplacian(G)
+  # read info about G
+  M, N = size(G)
+  nonz = find(G)
+  # define function to create a 1D laplacian and a sparse identity
+  fdl1(m) = spdiagm((-ones(m-1),2*ones(m),-ones(m-1)), [-1,0,1])
+  # laplace operator on the full grid
+  A = kron(speye(M), fdl1(N)) + kron(fdl1(M), speye(N))
+  # return the restriction to the coloured grid points
+  return A[nonz, nonz]
+end
+
+## Does Gauss-Seidel always converge faster than Jacobi?
+A = fdlaplacian(numgridS(22))
+n = size(A,1)
+b = ones(n);
+x1,hist1 = linsys_jacobi(A,b)
+x2,hist2 = linsys_sor(A,b)
+
+##
+x1,hist1 = linsys_jacobi(A,b)
+hist1_toplot = hist1[find(hist1)]
+h = plot(hist1_toplot,yscale=:log10,linewidth=2,color=:red)
+xlabel!(h,"Iteration")
+ylabel!(h,"Residual norm upper-bound")
+omegas = [0.1,0.5,0.9,1,1.2,1.5,1.8,1.9,1.95]
+for i = 1:length(omegas)
+  x,hist = linsys_sor(A,b,omegas[i])
+  hist_toplot = hist[find(hist)]
+  plot!(h,hist_toplot,yscale=:log10,color=:black)
+  om = omegas[i]
+  annotate!(h,[(length(hist),hist[end],
+  text(join([L"\omega =",@sprintf("%.2f",omegas[i])]),12,:black,:left))])
+  sleep(2)
+  display(h)
+end
