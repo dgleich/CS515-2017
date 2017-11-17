@@ -1,0 +1,38 @@
+"""
+x = gmres(A,b,iters)
+"""
+function gmres(A,b,k)
+
+n = length(b)
+normb = norm(b)
+q = b/norm(b)
+
+Q = zeros(n,k+1)
+H = zeros(k+1,k)
+Q[:,1] = q
+hist = zeros(k)
+x = zeros(n)
+for i = 1:k
+    v = A*Q[:,i]
+    for j = 1:i
+        H[j,i]= v'*Q[:,j]
+        v = v - H[j,i]*Q[:,j]
+    end
+    # at this point, v = H(i+1,i)*Q(:,i+1)
+    H[i+1,i] = norm(v)
+    Q[:,i+1] = v/H[i+1,i]
+
+    ei = zeros(i+1)
+    ei[1] = normb
+
+    y = H[1:i+1,1:i]\ei
+    x = Q[:,1:i]*y;
+    hist[i] = norm(b-A*x)
+
+    if H[i+1,i] < 100*eps()
+        # this means we've finished the factorization early
+        break
+    end
+end
+return x,hist
+end

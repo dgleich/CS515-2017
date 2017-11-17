@@ -1,0 +1,67 @@
+## Orthogonal polynomials and tridiagonal matrices
+
+## The Legendre polynomials are orthogonal polynomials over [-1,1]
+# From Wikipedia, http://en.wikipedia.org/wiki/Legendre_polynomials
+ps = Vector{Function}()
+push!(ps, t -> 1.0)
+push!(ps, t -> t)
+push!(ps, t -> 1/2*(3t^2 - 1.0))
+push!(ps, t -> 1/2*(5t^3 - 3t))
+push!(ps, t -> 1/8*(35t^4 - 30t^2 + 3))
+
+##
+using Plots
+gr(dpi = 200)
+plot() # create a new plot
+for i=1:length(ps)
+  plot!(-1:0.01:1, ps[i], label="$(i-1)", lw=3.0)
+end
+plot!()
+## Now let's look at the three term recurrences
+## Three-term recurrence for the
+# (n+1) Pn+1(t) = (2n+1)*t*Pn(t) - n*Pn-1(t)
+n = 5
+B = zeros(Int64,n,n)
+b = zeros(Int64,n)
+t = 0.0
+B[1,1] = 1
+b[1] = 1
+for i = 1:n-1
+    B[i+1,i] = -t*(2*(i-1) + 1)
+    B[i+1,i+1] = i
+    if i>1
+        B[i+1,i-1] = i-1
+    end
+end
+##
+B\b
+
+## We can code this into a function!
+function legendre_eval(k,t)
+n = k
+B = zeros(n,n)
+b = zeros(n)
+B[1,1] = 1
+b[1] = 1
+for i = 1:n-1
+    B[i+1,i] = -t*(2*(i-1) + 1)
+    B[i+1,i+1] = i
+    if i>1
+        B[i+1,i-1] = i-1
+    end
+end
+p = B\b
+return p
+end
+
+##
+legendre_eval(10,1/sqrt(2))
+
+##
+k = 55
+pts = -1:0.01:1
+P = zeros(k,length(pts))
+for i = 1:length(pts)
+    P[:,i] = legendre_eval(k, pts[i])
+end
+f = plot(pts,P',legend=false, lw=0.5, alpha=0.5)
